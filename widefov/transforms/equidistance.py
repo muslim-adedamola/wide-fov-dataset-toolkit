@@ -1,23 +1,36 @@
 from dataclasses import dataclass
-import math
 
 import numpy as np
 from PIL import Image
 
 from widefov.annotations.bbox import points_to_xyxy, xywh_to_points, xyxy_to_yolo
-from widefov.transforms.common import compute_resized_shape
 
 
-def crop_params_for_division(
+def equidistance_output_shape(
+    original_width: int,
+    original_height: int,
+    landscape_width: int = 3264,
+    landscape_height: int = 2448,
+) -> tuple[int, int]:
+    """
+    Return the resized shape used by the original RMFV365 equidistance script.
+    """
+    if original_width < original_height:
+        return landscape_height, landscape_width
+
+    return landscape_width, landscape_height
+
+
+def crop_params_for_equidistance(
     width: int,
     height: int,
-    crop_a: float = 0.24,
-    crop_b: float = 0.19,
+    crop_a: float = 0.185,
+    crop_b: float = 0.14,
 ) -> tuple[int, int, int, int]:
     """
-    Crop parameters for the division-model distortion variants.
+    Crop parameters for equidistance projection.
 
-    This follows the original RMFV365 division scripts.
+    Follows the original RMFV365 equidistance script.
     """
     if height > width:
         left = int(crop_b * width) - 10
@@ -34,32 +47,30 @@ def crop_params_for_division(
 
 
 @dataclass
-class DivisionModelTransform:
+class EquidistanceProjectionTransform:
     """
-    Division-model fisheye distortion.
+    Equidistance projection transform.
 
-    This implements the RMFV365 division-model variants.
-    The original div2 setting used d=0.55, crop_a=0.24, and crop_b=0.19.
+    This implements the RMFV365 equidistance projection variant.
+    The original setting used focal_length=1000 and suffix "_f".
     """
 
-    distortion_amount: float = 0.55
-    target_aspect_ratio: float = 3264 / 2448
-    crop_a: float = 0.24
-    crop_b: float = 0.19
-    suffix: str = "_div2"
+    focal_length: float = 1000.0
+    landscape_width: int = 3264
+    landscape_height: int = 2448
+    crop_a: float = 0.185
+    crop_b: float = 0.14
+    suffix: str = "_f"
 
     def resize_image(self, image: Image.Image) -> Image.Image:
         width, height = image.size
-        new_width, new_height, _, _ = compute_resized_shape(
-            width=width,
-            height=height,
-            target_aspect_ratio=self.target_aspect_ratio,
+        new_width, new_height = equidistance_output_shape(
+            original_width=width,
+            original_height=height,
+            landscape_width=self.landscape_width,
+            landscape_height=self.landscape_height,
         )
         return image.resize((new_width, new_height), Image.BICUBIC)
-
-    def _xi(self, width: int, height: int) -> float:
-        r_m = math.sqrt((width - width / 2) ** 2 + (height - height / 2) ** 2)
-        return -self.distortion_amount / (r_m * (1 - self.distortion_amount)) ** 2
 
     def transform_points(
         self,
@@ -67,17 +78,19 @@ class DivisionModelTransform:
         original_width: int,
         original_height: int,
     ) -> tuple[np.ndarray, tuple[int, int, int, int]]:
-        resized_width, resized_height, scale_x, scale_y = compute_resized_shape(
-            width=original_width,
-            height=original_height,
-            target_aspect_ratio=self.target_aspect_ratio,
+        resized_width, resized_height = equidistance_output_shape(
+            original_width=original_width,
+            original_height=original_height,
+            landscape_width=self.landscape_width,
+            landscape_height=self.landscape_height,
         )
+
+        scale_x = resized_width / original_width
+        scale_y = resized_height / original_height
 
         points = points.astype(np.float32).copy()
         points[:, 0] *= scale_x
         points[:, 1] *= scale_y
-
-        xi_value = self._xi(resized_width, resized_height)
 
         x = points[:, 0] - resized_width / 2
         y = points[:, 1] - resized_height / 2
@@ -85,17 +98,14 @@ class DivisionModelTransform:
         r = np.sqrt(x**2 + y**2)
         theta = np.arctan2(y, x)
 
-        inside = 1 - 4 * xi_value * r**2
-        inside = np.maximum(inside, 0)
-
-        s1 = 2 * r / (1 + np.sqrt(inside))
+        s1 = self.focal_length * np.arctan2(r, self.focal_length)
 
         transformed_x = s1 * np.cos(theta) + resized_width / 2
         transformed_y = s1 * np.sin(theta) + resized_height / 2
 
         transformed_points = np.stack([transformed_x, transformed_y], axis=1)
 
-        crop_box = crop_params_for_division(
+        crop_box = crop_params_for_equidistance(
             width=resized_width,
             height=resized_height,
             crop_a=self.crop_a,
@@ -113,22 +123,18 @@ class DivisionModelTransform:
         width, height = image.size
 
         image_array = np.asarray(image)
-        xi_value = self._xi(width, height)
 
         y_grid = np.arange(height)
         x_grid = np.arange(width)
-        xi_grid, yi_grid = np.meshgrid(x_grid, y_grid)
+        xi, yi = np.meshgrid(x_grid, y_grid)
 
-        xt = xi_grid - width / 2
-        yt = yi_grid - height / 2
+        xt = xi - width / 2
+        yt = yi - height / 2
 
         r = np.sqrt(xt**2 + yt**2)
         theta = np.arctan2(yt, xt)
 
-        inside = 1 - 4 * xi_value * r**2
-        inside = np.maximum(inside, 0)
-
-        s1 = 2 * r / (1 + np.sqrt(inside))
+        s1 = self.focal_length * np.arctan2(r, self.focal_length)
 
         x2 = s1 * np.cos(theta)
         y2 = s1 * np.sin(theta)
@@ -142,11 +148,11 @@ class DivisionModelTransform:
             transformed = np.zeros((height, width), dtype=np.uint8)
 
         valid = (xf >= 0) & (xf < width) & (yf >= 0) & (yf < height)
-        transformed[yf[valid], xf[valid]] = image_array[yi_grid[valid], xi_grid[valid]]
+        transformed[yf[valid], xf[valid]] = image_array[yi[valid], xi[valid]]
 
         transformed_image = Image.fromarray(transformed)
 
-        crop_box = crop_params_for_division(
+        crop_box = crop_params_for_equidistance(
             width=width,
             height=height,
             crop_a=self.crop_a,

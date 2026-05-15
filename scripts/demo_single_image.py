@@ -3,14 +3,19 @@ from pathlib import Path
 
 from PIL import Image
 
-from widefov.transforms.fisheye_independent import FisheyeIndependentTransform
+from widefov.transforms.registry import available_transforms, get_transform
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--image", required=True, help="Path to input image")
     parser.add_argument("--output", required=True, help="Path to output image")
-    parser.add_argument("--n", type=float, default=7.0, help="Fisheye scaling factor")
+    parser.add_argument(
+        "--transform",
+        default="fisheye_n7",
+        choices=available_transforms(),
+        help="Transform to apply",
+    )
     args = parser.parse_args()
 
     image_path = Path(args.image)
@@ -19,7 +24,7 @@ def main():
 
     image = Image.open(image_path).convert("RGB")
 
-    transform = FisheyeIndependentTransform(n=args.n, suffix=f"_{int(args.n)}")
+    transform = get_transform(args.transform)
     transformed = transform.transform_image(image)
 
     transformed.save(output_path)

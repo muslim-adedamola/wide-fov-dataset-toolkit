@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: "Wide-FoV Dataset Toolkit"
+message: "If you use this repository or build on the RMFV365 transformation pipeline, please cite the associated IECON 2024 paper."
+type: software
+authors:
+  - family-names: Alaran
+    given-names: Muslim Adedamola
+  - family-names: Balgabekova
+    given-names: Zarema
+  - family-names: Varol
+    given-names: Huseyin Atakan
+repository-code: "https://github.com/muslim-adedamola/wide-fov-dataset-toolkit"
+license: MIT
+version: "0.1.0"
+date-released: "2026-05-16"
+
+preferred-citation:
+  type: conference-paper
+  title: "Field of View Invariant Object Recognition Using Non-Linear Transformation Augmentation"
+  authors:
+    - family-names: Alaran
+      given-names: Muslim
+    - family-names: Balgabekova
+      given-names: Zarema
+    - family-names: Varol
+      given-names: Huseyin Atakan
+  conference:
+    name: "50th Annual Conference of the IEEE Industrial Electronics Society"
+  year: 2024
