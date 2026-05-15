@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wide-fov-dataset-toolkit"
+version = "0.1.0"
+description = "Toolkit for generating wide-FoV and fisheye object-detection datasets from perspective datasets."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "Pillow",
+    "tqdm",
+    "pyyaml",
+    "pycocotools",
+]
+
+[tool.setuptools.packages.find]
+include = ["widefov*"]
