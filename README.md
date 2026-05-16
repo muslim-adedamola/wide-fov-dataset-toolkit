@@ -20,6 +20,21 @@ In simple terms:
 
 > Turn perspective object detection datasets into multi-FoV training data.
 
+### Example transformations
+
+| Original | Fisheye `n=7` |
+|---|---|
+| ![Original sample image](examples/sample.png) | ![Fisheye n7 transformation](assets/sample_fisheye_n7.png) |
+
+| Equidistance | Square fisheye | Division model |
+|---|---|---|
+| ![Equidistance transformation](assets/sample_equidistance.png) | ![Square fisheye transformation](assets/sample_square_fisheye.png) | ![Division model transformation](assets/sample_division2.png) |
+
+
+### Bounding-box transformation
+
+![Bounding-box transformation example](assets/bbox_debug_fisheye_n7.png)
+
 ---
 
 ## Features
@@ -127,7 +142,7 @@ pip install -e .
 pip install pytest
 ```
 
-Run the test
+Run the tests
 
 ```
 pytest
