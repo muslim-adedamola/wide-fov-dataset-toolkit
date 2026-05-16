@@ -16,6 +16,8 @@ def get_transform(name: str):
     - barrel2
     - division1
     - division2
+    - square_fisheye
+    - equidistance
     """
     name = name.lower()
 
@@ -84,7 +86,7 @@ def get_transform(name: str):
     raise ValueError(
         f"Unknown transform '{name}'. "
         "Available transforms: "
-        "fisheye_n4, fisheye_n7, barrel1, barrel2, division1, division2"
+        "fisheye_n4, fisheye_n7, barrel1, barrel2, division1, division2, square_fisheye, equidistance"
     )
 
 
