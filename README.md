@@ -132,8 +132,10 @@ Run the test
 ```
 pytest
 ```
+
 Expected result:
 2 passed.
+
 ---
 
 ## Expected YOLO dataset format
