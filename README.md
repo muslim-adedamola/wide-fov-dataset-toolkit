@@ -4,7 +4,7 @@ A reusable toolkit for generating wide-field-of-view and fisheye-style object de
 
 This repository was originally developed from the transformation pipeline used to generate **RMFV365**, a large-scale multi-field-of-view extension of Objects365 introduced in our IECON 2024 paper:
 
-**Field of View Invariant Object Recognition Using Non-Linear Transformation Augmentation**
+**[Field of View Invariant Object Recognition Using Non-Linear Transformation Augmentation](https://ieeexplore.ieee.org/document/10905287)**
 
 The goal of this toolkit is to make the image and bounding-box transformation pipeline reusable for other object detection datasets, including Objects365, COCO-style datasets, YOLO-format datasets, and custom robotics, surveillance, autonomous-driving, or wide-FoV camera datasets.
 
@@ -389,6 +389,16 @@ python scripts/generate_yolo_dataset.py \
 
 ---
 
+## Large-scale dataset generation
+
+The current scripts are designed to be easy to read, modify, and verify. They work well for testing, debugging, and moderate-sized datasets.
+
+For very large datasets such as Objects365, users may want to add multiprocessing or distributed processing to speed up generation. In the original RMFV365 experiments, multiprocessing was used to process large image folders more efficiently.
+
+A practical approach is to split the image list into chunks and process each chunk in parallel. When doing this, ensure that output filenames remain unique and that multiple workers do not write to the same label file at the same time.
+
+---
+
 ## Legacy RMFV365 scripts
 
 The `legacy/` folder contains the original scripts used in the RMFV365 experiments.
@@ -430,7 +440,7 @@ If you use this repository or build on the RMFV365 transformation pipeline, plea
 
 ## Acknowledgements
 
-This toolkit is based on the transformation pipeline developed for RMFV365 and COHI-365 experiments. The original work was carried out at the Institute of Smart Systems and Artificial Intelligence, Nazarbayev University.
+This toolkit is based on the transformation pipeline developed for [RMFV365](https://ieeexplore.ieee.org/document/10905287) and COHI-365 experiments. The original work was carried out at the Institute of Smart Systems and Artificial Intelligence, Nazarbayev University.
 
 ---
 
