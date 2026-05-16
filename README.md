@@ -436,5 +436,5 @@ This toolkit is based on the transformation pipeline developed for RMFV365 and C
 
 ## License
 
-- MIT License for broad reuse.
+- This project is released under the MIT License.
 
